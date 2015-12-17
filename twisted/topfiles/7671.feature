@@ -1,0 +1,1 @@
+twisted.iternet.ssl.multiTrust provides an IOpenSSLTrustRoot with multiple certificates
