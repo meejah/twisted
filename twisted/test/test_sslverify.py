@@ -69,7 +69,7 @@ if not skipSSL:
     from twisted.protocols.tls import TLSMemoryBIOFactory
     from twisted.internet.ssl import PrivateCertificate, KeyPair, Certificate
     from twisted.internet.ssl import ClientContextFactory, trustRootFromCertificates
-    from twisted.internet._sslverify import IOpenSSLTrustRoot
+    from twisted.internet.ssl import optionsForClientTLS
     from OpenSSL.crypto import FILETYPE_PEM
 
 
@@ -2175,13 +2175,56 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
     def test_trustRootFromCertificatesPrivatePublic(self):
         """
         trustRootFromCertificates must accept either Certificate or
-        PrivateCertificate.
+        PrivateCertificate and accept a connection with valid
+        certificates.
         """
         cert0 = PrivateCertificate.loadPEM(A_HOST_KEYPAIR)
         cert1 = Certificate.loadPEM(A_HOST_CERTIFICATE_PEM)
 
         mt = trustRootFromCertificates([cert0, cert1])
-        self.assertTrue(IOpenSSLTrustRoot.providedBy(mt))
+
+        # verify that the returned object acts correctly when used as
+        # a trustRoot= param to optionsForClientTLS
+        sProto, cProto, pump = loopbackTLSConnectionInMemory(
+            trustRoot=mt,
+            privateKey=cert0.privateKey.original,
+            serverCertificate=cert0.original,
+        )
+
+        # this connection should succeed
+        self.assertEqual(cProto.wrappedProtocol.data, b'greetings!')
+        self.assertEqual(cProto.wrappedProtocol.lostReason, None)
+
+    def test_trustRootFromCertificatesPrivatePublicUntrusted(self):
+        """
+        trustRootFromCertificates should return a trust-root that rejects
+        connections using unknown certificates.
+        """
+        cert0 = PrivateCertificate.loadPEM(A_HOST_KEYPAIR)
+        cert1 = Certificate.loadPEM(A_HOST_CERTIFICATE_PEM)
+
+        # this test is the same as the above, except we do NOT include
+        # the server's cert ('cert0') in the list of trusted
+        # certificates.
+        mt = trustRootFromCertificates([cert1])
+
+        # verify that the returned object acts correctly when used as
+        # a trustRoot= param to optionsForClientTLS
+        sProto, cProto, pump = loopbackTLSConnectionInMemory(
+            trustRoot=mt,
+            privateKey=cert0.privateKey.original,
+            serverCertificate=cert0.original,
+        )
+
+        # this connection should fail, so no data was received.
+        self.assertEqual(cProto.wrappedProtocol.data, b'')
+
+        # It was an L{SSL.Error}.
+        self.assertEqual(cProto.wrappedProtocol.lostReason.type, SSL.Error)
+
+        # Some combination of OpenSSL and PyOpenSSL is bad at reporting errors.
+        err = cProto.wrappedProtocol.lostReason.value
+        self.assertEqual(err.args[0][0][2], 'tlsv1 alert unknown ca')
 
     def test_trustRootFromCertificatesOpenSslObjects(self):
         """
