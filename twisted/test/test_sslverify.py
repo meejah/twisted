@@ -54,6 +54,7 @@ from twisted.internet.error import ConnectionClosed
 from twisted.python.compat import nativeString, _PY3, networkString
 from twisted.python.constants import NamedConstant, Names
 from twisted.python.filepath import FilePath
+from twisted.python.util import sibpath
 
 from twisted.trial import unittest, util
 from twisted.internet import protocol, defer, reactor
@@ -115,8 +116,7 @@ A_PEER_CERTIFICATE_PEM = """
 -----END CERTIFICATE-----
 """
 
-import os
-A_HOST_KEYPAIR = open(os.path.join(os.path.split(__file__)[0], 'server.pem'), 'r').read()
+A_HOST_KEYPAIR = open(sibpath(__file__, 'server.pem'), 'r').read()
 
 
 
