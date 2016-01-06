@@ -41,65 +41,6 @@ else:
     from twisted.internet._sslverify import IOpenSSLTrustRoot
 
 
-class CertificateTests(TestCase):
-    import twisted
-    _pem = FilePath(
-        networkString(twisted.__file__)).sibling(b"test").child(b"server.pem")
-    del twisted
-    if FILETYPE_PEM is None:
-        skip = 'CertificateTests require OpenSSL'
-
-    def test_multiTrustPrivatePublic(self):
-        """
-        multiTrust must accept either Certificate or PrivateCertificate.
-        """
-        pem = self._pem.getContent()
-        cert0 = PrivateCertificate.loadPEM(pem)
-        cert1 = Certificate.loadPEM(pem)
-
-        mt = multiTrust([cert0, cert1])
-        self.assertTrue(IOpenSSLTrustRoot.providedBy(mt))
-
-    def test_multiTrustOpenSslObjects(self):
-        """
-        multiTrust works with 'real' OpenSSL objects.
-        """
-        pem = self._pem.getContent()
-        cert0 = PrivateCertificate.loadPEM(pem).original
-        cert1 = Certificate.loadPEM(pem).original
-
-        mt = multiTrust([cert0, cert1])
-        self.assertTrue(IOpenSSLTrustRoot.providedBy(mt))
-
-    def test_multiTrustInvalidObject(self):
-        """
-        multiTrust rejects 'str' instances passed in place of Certificate.
-        """
-        exception = self.assertRaises(
-            TypeError,
-            multiTrust, ['I am only a string'],
-        )
-        self.assertEqual(
-            "certificates items must be twisted.iternet.ssl.Certificate"
-            " or OpenSSL.crypto.X509 instances",
-            exception.args[0],
-        )
-
-    def test_multiTrustInvalidOpenSslObject(self):
-        """
-        multiTrust rejects an OpenSSL object that isn't X509 instance.
-        """
-        cert0 = KeyPair.load(self._pem.getContent(), FILETYPE_PEM)
-        exception = self.assertRaises(
-            TypeError,
-            multiTrust, [cert0],
-        )
-        self.assertEqual(
-            "certificates items must be twisted.iternet.ssl.Certificate"
-            " or OpenSSL.crypto.X509 instances",
-            exception.args[0]
-        )
-
 class TLSMixin:
     requiredInterfaces = [IReactorSSL]
 
