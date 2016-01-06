@@ -51,7 +51,7 @@ from twisted.test.test_twisted import SetAsideModule
 from twisted.test.iosim import connectedServerAndClient
 
 from twisted.internet.error import ConnectionClosed
-from twisted.python.compat import nativeString, _PY3
+from twisted.python.compat import nativeString, _PY3, networkString
 from twisted.python.constants import NamedConstant, Names
 from twisted.python.filepath import FilePath
 
@@ -66,6 +66,11 @@ if not skipSSL:
     from twisted.internet.ssl import platformTrust, VerificationError
     from twisted.internet import _sslverify as sslverify
     from twisted.protocols.tls import TLSMemoryBIOFactory
+    from twisted.internet.ssl import PrivateCertificate, KeyPair, Certificate
+    from twisted.internet.ssl import ClientContextFactory, multiTrust
+    from twisted.internet._sslverify import IOpenSSLTrustRoot
+    from OpenSSL.crypto import FILETYPE_PEM
+
 
 # A couple of static PEM-format certificates to be used by various tests.
 A_HOST_CERTIFICATE_PEM = """
@@ -109,6 +114,9 @@ A_PEER_CERTIFICATE_PEM = """
         yqDtGhklsWW3ZwBzEh5VEOUp
 -----END CERTIFICATE-----
 """
+
+import os
+A_HOST_KEYPAIR = open(os.path.join(os.path.split(__file__)[0], 'server.pem'), 'r').read()
 
 
 
@@ -2155,11 +2163,11 @@ class ConstructorsTests(unittest.TestCase):
             12346)
 
 
-class CertificateTests(TestCase):
-    import twisted
-    _pem = FilePath(
-        networkString(twisted.__file__)).sibling(b"test").child(b"server.pem")
-    del twisted
+class MultipleCertificateTrustRootTests(unittest.TestCase):
+    """
+    Test the behavior of the trustRootFromCertificates() API call.
+    """
+
     if FILETYPE_PEM is None:
         skip = 'CertificateTests require OpenSSL'
 
@@ -2167,9 +2175,8 @@ class CertificateTests(TestCase):
         """
         multiTrust must accept either Certificate or PrivateCertificate.
         """
-        pem = self._pem.getContent()
-        cert0 = PrivateCertificate.loadPEM(pem)
-        cert1 = Certificate.loadPEM(pem)
+        cert0 = PrivateCertificate.loadPEM(A_HOST_KEYPAIR)
+        cert1 = Certificate.loadPEM(A_HOST_CERTIFICATE_PEM)
 
         mt = multiTrust([cert0, cert1])
         self.assertTrue(IOpenSSLTrustRoot.providedBy(mt))
@@ -2178,12 +2185,15 @@ class CertificateTests(TestCase):
         """
         multiTrust works with 'real' OpenSSL objects.
         """
-        pem = self._pem.getContent()
-        cert0 = PrivateCertificate.loadPEM(pem).original
-        cert1 = Certificate.loadPEM(pem).original
+        cert0 = PrivateCertificate.loadPEM(A_HOST_KEYPAIR).original
+        cert1 = Certificate.loadPEM(A_HOST_CERTIFICATE_PEM).original
 
         mt = multiTrust([cert0, cert1])
-        self.assertTrue(IOpenSSLTrustRoot.providedBy(mt))
+
+        # verify that we got back an instance that a) implements
+        # IOpenSSLTrustRoot and b) behaves properly (i.e. by rejecting
+        # a connection)
+        options = sslverify.optionsForClientTLS(u"example.com", trustRoot=mt)
 
     def test_multiTrustInvalidObject(self):
         """
@@ -2203,7 +2213,7 @@ class CertificateTests(TestCase):
         """
         multiTrust rejects an OpenSSL object that isn't X509 instance.
         """
-        cert0 = KeyPair.load(self._pem.getContent(), FILETYPE_PEM)
+        cert0 = KeyPair.load(A_HOST_KEYPAIR, FILETYPE_PEM)
         exception = self.assertRaises(
             TypeError,
             multiTrust, [cert0],
