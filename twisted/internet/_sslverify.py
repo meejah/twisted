@@ -1011,7 +1011,7 @@ class OpenSSLCertificateAuthorities(object):
             store.add_cert(cert)
 
 
-def multiTrust(certificates):
+def trustRootFromCertificates(certificates):
     """
     From a list of L{Certificate}, L{PrivateCertificate}, or
     L{OpenSSL.crypto.X509} instances this returns an object which

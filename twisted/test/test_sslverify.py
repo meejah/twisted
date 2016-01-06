@@ -68,7 +68,7 @@ if not skipSSL:
     from twisted.internet import _sslverify as sslverify
     from twisted.protocols.tls import TLSMemoryBIOFactory
     from twisted.internet.ssl import PrivateCertificate, KeyPair, Certificate
-    from twisted.internet.ssl import ClientContextFactory, multiTrust
+    from twisted.internet.ssl import ClientContextFactory, trustRootFromCertificates
     from twisted.internet._sslverify import IOpenSSLTrustRoot
     from OpenSSL.crypto import FILETYPE_PEM
 
@@ -2172,37 +2172,39 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
     if FILETYPE_PEM is None:
         skip = 'CertificateTests require OpenSSL'
 
-    def test_multiTrustPrivatePublic(self):
+    def test_trustRootFromCertificatesPrivatePublic(self):
         """
-        multiTrust must accept either Certificate or PrivateCertificate.
+        trustRootFromCertificates must accept either Certificate or
+        PrivateCertificate.
         """
         cert0 = PrivateCertificate.loadPEM(A_HOST_KEYPAIR)
         cert1 = Certificate.loadPEM(A_HOST_CERTIFICATE_PEM)
 
-        mt = multiTrust([cert0, cert1])
+        mt = trustRootFromCertificates([cert0, cert1])
         self.assertTrue(IOpenSSLTrustRoot.providedBy(mt))
 
-    def test_multiTrustOpenSslObjects(self):
+    def test_trustRootFromCertificatesOpenSslObjects(self):
         """
-        multiTrust works with 'real' OpenSSL objects.
+        trustRootFromCertificates works with 'real' OpenSSL objects.
         """
         cert0 = PrivateCertificate.loadPEM(A_HOST_KEYPAIR).original
         cert1 = Certificate.loadPEM(A_HOST_CERTIFICATE_PEM).original
 
-        mt = multiTrust([cert0, cert1])
+        mt = trustRootFromCertificates([cert0, cert1])
 
         # verify that we got back an instance that a) implements
         # IOpenSSLTrustRoot and b) behaves properly (i.e. by rejecting
         # a connection)
         options = sslverify.optionsForClientTLS(u"example.com", trustRoot=mt)
 
-    def test_multiTrustInvalidObject(self):
+    def test_trustRootFromCertificatesInvalidObject(self):
         """
-        multiTrust rejects 'str' instances passed in place of Certificate.
+        trustRootFromCertificates rejects 'str' instances passed in place
+        of Certificate.
         """
         exception = self.assertRaises(
             TypeError,
-            multiTrust, ['I am only a string'],
+            trustRootFromCertificates, ['I am only a string'],
         )
         self.assertEqual(
             "certificates items must be twisted.iternet.ssl.Certificate"
@@ -2210,14 +2212,15 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
             exception.args[0],
         )
 
-    def test_multiTrustInvalidOpenSslObject(self):
+    def test_trustRootFromCertificatesInvalidOpenSslObject(self):
         """
-        multiTrust rejects an OpenSSL object that isn't X509 instance.
+        trustRootFromCertificates rejects an OpenSSL object that isn't
+        X509 instance.
         """
         cert0 = KeyPair.load(A_HOST_KEYPAIR, FILETYPE_PEM)
         exception = self.assertRaises(
             TypeError,
-            multiTrust, [cert0],
+            trustRootFromCertificates, [cert0],
         )
         self.assertEqual(
             "certificates items must be twisted.iternet.ssl.Certificate"
