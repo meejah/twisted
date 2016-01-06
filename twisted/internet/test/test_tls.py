@@ -73,22 +73,32 @@ class CertificateTests(TestCase):
 
     def test_multiTrustInvalidObject(self):
         """
-        multiTrust rejects obviously-wrong instance
+        multiTrust rejects 'str' instances passed in place of Certificate.
         """
-        with self.assertRaises(AttributeError):
-            multiTrust(['sadness'])
+        exception = self.assertRaises(
+            TypeError,
+            multiTrust, ['I am only a string'],
+        )
+        self.assertEqual(
+            "certificates items must be twisted.iternet.ssl.Certificate"
+            " or OpenSSL.crypto.X509 instances",
+            exception.args[0],
+        )
 
     def test_multiTrustInvalidOpenSslObject(self):
         """
-        multiTrust rejects invalid OpenSSL object
+        multiTrust rejects an OpenSSL object that isn't X509 instance.
         """
-        # 'nearly' valid, but multiTrust must reject this because it's
-        # not a certificate.
         cert0 = KeyPair.load(self._pem.getContent(), FILETYPE_PEM)
-
-        with self.assertRaises(AttributeError):
-            multiTrust([cert0])
-
+        exception = self.assertRaises(
+            TypeError,
+            multiTrust, [cert0],
+        )
+        self.assertEqual(
+            "certificates items must be twisted.iternet.ssl.Certificate"
+            " or OpenSSL.crypto.X509 instances",
+            exception.args[0]
+        )
 
 class TLSMixin:
     requiredInterfaces = [IReactorSSL]

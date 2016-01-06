@@ -1028,7 +1028,7 @@ def multiTrust(certificates):
         if isinstance(cert, CertBase):
             cert = cert.original
         if not isinstance(cert, OpenSSL.crypto.X509):
-            raise AttributeError(
+            raise TypeError(
                 "certificates items must be twisted.iternet.ssl.Certificate"
                 " or OpenSSL.crypto.X509 instances"
             )
