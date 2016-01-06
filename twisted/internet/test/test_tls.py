@@ -51,7 +51,7 @@ class CertificateTests(TestCase):
 
     def test_multiTrustPrivatePublic(self):
         """
-        multiTrust accepts Certificate or PrivateCertificate
+        multiTrust must accept either Certificate or PrivateCertificate.
         """
         pem = self._pem.getContent()
         cert0 = PrivateCertificate.loadPEM(pem)
@@ -62,7 +62,7 @@ class CertificateTests(TestCase):
 
     def test_multiTrustOpenSslObjects(self):
         """
-        multiTrust works with 'real' OpenSSL objects
+        multiTrust works with 'real' OpenSSL objects.
         """
         pem = self._pem.getContent()
         cert0 = PrivateCertificate.loadPEM(pem).original

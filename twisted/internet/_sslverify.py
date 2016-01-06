@@ -1013,17 +1013,14 @@ class OpenSSLCertificateAuthorities(object):
 
 def multiTrust(certificates):
     """
-    From a list of L{Certificate} or L{OpenSSL.crypto.X509} instances,
-    this returns an object which implements C{IOpenSSLTrustRoot} and
-    is hence suitable for use as the trustRoot= keyword argument to
-    optionsForClientTLS
+    From a list of L{Certificate}, L{PrivateCertificate}, or
+    L{OpenSSL.crypto.X509} instances this returns an object which
+    implements C{IOpenSSLTrustRoot} and is hence suitable for use as
+    the trustRoot= keyword argument to optionsForClientTLS
 
-    @param certificates: L{Certificate} or L{OpenSSL.crypto.X509} instances
-    @type certificates: L{list}
+    @param certificates: All certificates which will be trusted.
+    @type certificates: C{sequence} of L{CertBase} or L{OpenSSL.crypto.X509}
     """
-
-    # XXX what about accepting FilePath objects as well, and
-    # attempting to load the certificate?
 
     certs = []
     for cert in certificates:
