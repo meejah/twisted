@@ -116,7 +116,8 @@ A_PEER_CERTIFICATE_PEM = """
 -----END CERTIFICATE-----
 """
 
-A_HOST_KEYPAIR = open(sibpath(__file__, 'server.pem'), 'r').read()
+with open(sibpath(__file__, 'server.pem'), 'r') as f:
+    A_HOST_KEYPAIR = f.read()
 
 
 
