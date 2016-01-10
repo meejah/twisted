@@ -51,7 +51,7 @@ from twisted.test.test_twisted import SetAsideModule
 from twisted.test.iosim import connectedServerAndClient
 
 from twisted.internet.error import ConnectionClosed
-from twisted.python.compat import nativeString, _PY3, networkString
+from twisted.python.compat import nativeString, _PY3
 from twisted.python.constants import NamedConstant, Names
 from twisted.python.filepath import FilePath
 from twisted.python.util import sibpath
@@ -68,9 +68,7 @@ if not skipSSL:
     from twisted.internet import _sslverify as sslverify
     from twisted.protocols.tls import TLSMemoryBIOFactory
     from twisted.internet.ssl import PrivateCertificate, KeyPair, Certificate
-    from twisted.internet.ssl import ClientContextFactory, trustRootFromCertificates
-    from twisted.internet.ssl import optionsForClientTLS
-    from OpenSSL.crypto import FILETYPE_PEM
+    from twisted.internet.ssl import trustRootFromCertificates
 
 
 # A couple of static PEM-format certificates to be used by various tests.
@@ -2169,7 +2167,7 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
     Test the behavior of the trustRootFromCertificates() API call.
     """
 
-    if FILETYPE_PEM is None:
+    if skipSSL:
         skip = 'CertificateTests require OpenSSL'
 
     def test_trustRootFromCertificatesPrivatePublic(self):

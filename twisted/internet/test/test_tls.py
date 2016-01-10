@@ -22,7 +22,7 @@ from twisted.internet.endpoints import (
     SSL4ServerEndpoint, SSL4ClientEndpoint, TCP4ClientEndpoint)
 from twisted.internet.error import ConnectionClosed
 from twisted.internet.task import Cooperator
-from twisted.trial.unittest import SkipTest, TestCase
+from twisted.trial.unittest import SkipTest
 from twisted.python.runtime import platform
 
 from twisted.internet.test.test_core import ObjectModelIntegrationMixin
@@ -36,9 +36,8 @@ try:
 except ImportError:
     FILETYPE_PEM = None
 else:
-    from twisted.internet.ssl import PrivateCertificate, KeyPair, Certificate
-    from twisted.internet.ssl import ClientContextFactory, multiTrust
-    from twisted.internet._sslverify import IOpenSSLTrustRoot
+    from twisted.internet.ssl import PrivateCertificate, KeyPair
+    from twisted.internet.ssl import ClientContextFactory
 
 
 class TLSMixin:
