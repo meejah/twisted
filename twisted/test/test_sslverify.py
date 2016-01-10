@@ -2228,15 +2228,21 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
         """
         trustRootFromCertificates works with 'real' OpenSSL objects.
         """
-        cert0 = PrivateCertificate.loadPEM(A_HOST_KEYPAIR).original
+        private = PrivateCertificate.loadPEM(A_HOST_KEYPAIR)
+        cert0 = private.original
+        key0 = private.privateKey.original
         cert1 = Certificate.loadPEM(A_HOST_CERTIFICATE_PEM).original
 
         mt = trustRootFromCertificates([cert0, cert1])
 
-        # verify that we got back an instance that a) implements
-        # IOpenSSLTrustRoot and b) behaves properly (i.e. by rejecting
-        # a connection)
-        options = sslverify.optionsForClientTLS(u"example.com", trustRoot=mt)
+        sProto, cProto, pump = loopbackTLSConnectionInMemory(
+            trustRoot=mt,
+            privateKey=key0,
+            serverCertificate=cert0,
+        )
+        # this connection should succeed
+        self.assertEqual(cProto.wrappedProtocol.data, b'greetings!')
+        self.assertEqual(cProto.wrappedProtocol.lostReason, None)
 
     def test_trustRootFromCertificatesInvalidObject(self):
         """
