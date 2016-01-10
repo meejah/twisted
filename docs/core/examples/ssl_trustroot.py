@@ -7,6 +7,7 @@ from __future__ import print_function
 from twisted.internet import ssl, task, protocol, endpoints, defer
 from twisted.protocols.basic import LineReceiver
 from twisted.python.modules import getModule
+from twisted.python.util import sibpath
 
 # This is a simple example showing how to use
 # twisted.internet.ssl.trustRootFromCertificates() to make an object
@@ -29,21 +30,34 @@ from twisted.python.modules import getModule
 
 
 class SimpleProtocol(LineReceiver):
+    def __init__(self, *args, **kw):
+        self._closed = []
+
+    def when_closed(self):
+        d = defer.Deferred()
+        self._closed.append(d)
+        return d
+
     def connectionMade(self):
         print("Connection made, doing GET")
         self.transport.write('GET / HTTP/1.1\r\n\r\n')
 
     def lineReceived(self, line):
         print("receive:", line)
+        if line.strip() == '':
+            self.transport.loseConnection()
 
     def connectionLost(self, reason):
-        print("Connection lost:", reason)
+        print("Connection lost:", reason.value)
+        for d in self._closed:
+            d.callback(None)
+        self._closed = []
 
 
 @defer.inlineCallbacks
 def main(reactor):
-    cert_file = 'startssl-ca.pem'
-    # cert_file = 'google-root.pem'  # uncomment this line to see a failure
+    cert_file = sibpath(__file__, 'startssl-ca.pem')
+    # cert_file = sibpath(__file__, 'google-root.pem')  # uncomment this line to see a failure
     with open(cert_file, 'r') as f:
         root_cert = ssl.Certificate.loadPEM(f.read())
 
@@ -55,8 +69,8 @@ def main(reactor):
     endpoint = endpoints.SSL4ClientEndpoint(
         reactor, 'www.twistedmatrix.com', 443, options,
     )
-    client = yield endpoint.connect(factory)
-    yield defer.Deferred()
+    proto = yield endpoint.connect(factory)
+    yield proto.when_closed()
 
 if __name__ == '__main__':
     task.react(main)
