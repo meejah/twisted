@@ -852,22 +852,46 @@ class PublicKey:
 
 
 class KeyPair(PublicKey):
+    """
+    An x509 private/public keypair.
 
+    This wraps an OpenSSL.crypto.PKey object.
+    """
     def load(Class, data, format=crypto.FILETYPE_ASN1):
+        """
+        Load a key from an ASN.1- or PEM-format string.
+
+        @rtype: C{Class}
+        """
         return Class(crypto.load_privatekey(format, data))
     load = classmethod(load)
 
 
     def loadPEM(Class, data):
+        """
+        Load a ckey from a PEM-format string.
+
+        @rtype: C{Class}
+        """
         return Class.load(data, format=crypto.FILETYPE_PEM)
     loadPEM = classmethod(loadPEM)
 
 
     def dump(self, format=crypto.FILETYPE_ASN1):
+        """
+        Dump this key to an ASN.1- or PEM- format string.
+
+        @rtype: C{str}
+        """
         return crypto.dump_privatekey(format, self.original)
 
 
     def dumpPEM(self):
+        """
+        Dump this key to a PEM-format string.
+
+        @rtype: C{str}
+        """
         return self.dump(format=crypto.FILETYPE_PEM)
 
 
@@ -880,6 +904,9 @@ class KeyPair(PublicKey):
 
 
     def inspect(self):
+        """
+        Return a human-readable descriptive string for this key.
+        """
         t = self.original.type()
         if t == crypto.TYPE_RSA:
             ts = 'RSA'
@@ -892,6 +919,16 @@ class KeyPair(PublicKey):
 
 
     def generate(Class, kind=crypto.TYPE_RSA, size=1024):
+        """
+        Generate a new RSA or DSA key of a particular size.
+
+        @param kind: C{crypto.TYPE_RSA} or C{crypto.TYPE_DSA}
+
+        @param size: bits in the key
+        @type size: C{int}
+
+        @rtype: C{Class}
+        """
         pkey = crypto.PKey()
         pkey.generate_key(kind, size)
         return Class(pkey)
