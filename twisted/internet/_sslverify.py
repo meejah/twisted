@@ -639,10 +639,21 @@ class CertificateRequest(CertBase):
         return Class(req)
     load = classmethod(load)
 
+    def loadPEM(Class, data):
+        """
+        Load a certificate-request from a PEM-format data string.
+
+        @rtpe: C{Class}
+        """
+        return Class.load(data, crypto.FILETYPE_PEM)
+    loadPEM = classmethod(loadPEM)
+
 
     def dump(self, format=crypto.FILETYPE_ASN1):
         return crypto.dump_certificate_request(format, self.original)
 
+    def dumpPEM(self):
+        return self.dump(format=crypto.FILETYPE_PEM)
 
 
 class PrivateCertificate(Certificate):

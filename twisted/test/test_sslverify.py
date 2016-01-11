@@ -537,6 +537,36 @@ class ClientOptionsTests(unittest.SynchronousTestCase):
         self.assertEqual(str(error), expectedText)
 
 
+class CertificateRequestTests(unittest.TestCase):
+    """
+    Tests serialization of CertificateRequests
+    """
+    if skipSSL:
+        skip = skipSSL
+
+    def setUp(self):
+        self.keypair = sslverify.KeyPair.generate()
+        dn = sslverify.DistinguishedName(commonName=b'test')
+        self.request = sslverify.CertificateRequest.load(
+            self.keypair.certificateRequest(dn),
+        )
+
+    def test_load(self):
+        asnData = self.request.dump()
+
+        testReq = sslverify.CertificateRequest.load(asnData)
+        testData = testReq.dump()
+
+        self.assertEqual(asnData, testData)
+
+    def test_loadPEM(self):
+        pemData = self.request.dumpPEM()
+
+        testReq = sslverify.CertificateRequest.loadPEM(pemData)
+        testData = testReq.dumpPEM()
+
+        self.assertEqual(pemData, testData)
+
 
 class OpenSSLOptionsTests(unittest.TestCase):
     if skipSSL:
