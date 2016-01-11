@@ -858,8 +858,17 @@ class KeyPair(PublicKey):
     load = classmethod(load)
 
 
+    def loadPEM(Class, data):
+        return Class.load(data, format=crypto.FILETYPE_PEM)
+    loadPEM = classmethod(loadPEM)
+
+
     def dump(self, format=crypto.FILETYPE_ASN1):
         return crypto.dump_privatekey(format, self.original)
+
+
+    def dumpPEM(self):
+        return self.dump(format=crypto.FILETYPE_PEM)
 
 
     def __getstate__(self):
