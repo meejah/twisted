@@ -67,8 +67,6 @@ if not skipSSL:
     from twisted.internet.ssl import platformTrust, VerificationError
     from twisted.internet import _sslverify as sslverify
     from twisted.protocols.tls import TLSMemoryBIOFactory
-    from twisted.internet.ssl import PrivateCertificate, KeyPair, Certificate
-    from twisted.internet.ssl import trustRootFromCertificates
 
 
 # A couple of static PEM-format certificates to be used by various tests.
@@ -2176,10 +2174,10 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
         PrivateCertificate and accept a connection with valid
         certificates.
         """
-        cert0 = PrivateCertificate.loadPEM(A_HOST_KEYPAIR)
-        cert1 = Certificate.loadPEM(A_HOST_CERTIFICATE_PEM)
+        cert0 = sslverify.PrivateCertificate.loadPEM(A_HOST_KEYPAIR)
+        cert1 = sslverify.Certificate.loadPEM(A_HOST_CERTIFICATE_PEM)
 
-        mt = trustRootFromCertificates([cert0, cert1])
+        mt = sslverify.trustRootFromCertificates([cert0, cert1])
 
         # Verify that the returned object acts correctly when used as
         # a trustRoot= param to optionsForClientTLS
@@ -2198,13 +2196,13 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
         trustRootFromCertificates should return a trust-root that rejects
         connections using unknown certificates.
         """
-        cert0 = PrivateCertificate.loadPEM(A_HOST_KEYPAIR)
-        cert1 = Certificate.loadPEM(A_HOST_CERTIFICATE_PEM)
+        cert0 = sslverify.PrivateCertificate.loadPEM(A_HOST_KEYPAIR)
+        cert1 = sslverify.Certificate.loadPEM(A_HOST_CERTIFICATE_PEM)
 
         # this test is the same as the above, except we do NOT include
         # the server's cert ('cert0') in the list of trusted
         # certificates.
-        mt = trustRootFromCertificates([cert1])
+        mt = sslverify.trustRootFromCertificates([cert1])
 
         # verify that the returned object acts correctly when used as
         # a trustRoot= param to optionsForClientTLS
@@ -2228,12 +2226,12 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
         """
         trustRootFromCertificates rejects 'real' OpenSSL X509 objects.
         """
-        private = PrivateCertificate.loadPEM(A_HOST_KEYPAIR)
+        private = sslverify.PrivateCertificate.loadPEM(A_HOST_KEYPAIR)
         cert0 = private.original
 
         exception = self.assertRaises(
             TypeError,
-            trustRootFromCertificates, [cert0],
+            sslverify.trustRootFromCertificates, [cert0],
         )
         self.assertEqual(
             "certificates items must be twisted.iternet.ssl.CertBase"
