@@ -1011,15 +1011,16 @@ class OpenSSLCertificateAuthorities(object):
             store.add_cert(cert)
 
 
+
 def trustRootFromCertificates(certificates):
     """
-    From a list of L{Certificate}, L{PrivateCertificate}, or
-    L{OpenSSL.crypto.X509} instances this returns an object which
-    implements C{IOpenSSLTrustRoot} and is hence suitable for use as
-    the trustRoot= keyword argument to optionsForClientTLS
+    From a list of L{Certificate} or L{PrivateCertificate} instances
+    this returns an object which implements C{IOpenSSLTrustRoot} and
+    is hence suitable for use as the trustRoot= keyword argument to
+    optionsForClientTLS
 
     @param certificates: All certificates which will be trusted.
-    @type certificates: C{sequence} of L{CertBase} or L{OpenSSL.crypto.X509}
+    @type certificates: C{iterable} of L{CertBase}
     """
 
     certs = []
@@ -1027,13 +1028,14 @@ def trustRootFromCertificates(certificates):
         # PrivateCertificate or Certificate are both okay
         if isinstance(cert, CertBase):
             cert = cert.original
-        if not isinstance(cert, OpenSSL.crypto.X509):
+        else:
             raise TypeError(
-                "certificates items must be twisted.iternet.ssl.Certificate"
-                " or OpenSSL.crypto.X509 instances"
+                "certificates items must be twisted.iternet.ssl.CertBase"
+                " instances"
             )
         certs.append(cert)
     return OpenSSLCertificateAuthorities(certs)
+
 
 
 @implementer(IOpenSSLTrustRoot)
