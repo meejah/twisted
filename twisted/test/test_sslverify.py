@@ -2168,7 +2168,7 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
     """
 
     if skipSSL:
-        skip = 'CertificateTests require OpenSSL'
+        skip = skipSSL
 
     def test_trustRootFromCertificatesPrivatePublic(self):
         """
