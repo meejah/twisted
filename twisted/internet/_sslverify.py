@@ -1017,7 +1017,7 @@ def trustRootFromCertificates(certificates):
     From a list of L{Certificate} or L{PrivateCertificate} instances
     this returns an object which implements C{IOpenSSLTrustRoot} and
     is hence suitable for use as the trustRoot= keyword argument to
-    optionsForClientTLS
+    L{optionsForClientTLS}
 
     @param certificates: All certificates which will be trusted.
     @type certificates: C{iterable} of L{CertBase}

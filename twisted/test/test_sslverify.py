@@ -54,7 +54,7 @@ from twisted.internet.error import ConnectionClosed
 from twisted.python.compat import nativeString, _PY3
 from twisted.python.constants import NamedConstant, Names
 from twisted.python.filepath import FilePath
-from twisted.python.util import sibpath
+from twisted.python.modules import getModule
 
 from twisted.trial import unittest, util
 from twisted.internet import protocol, defer, reactor
@@ -114,8 +114,7 @@ A_PEER_CERTIFICATE_PEM = """
 -----END CERTIFICATE-----
 """
 
-with open(sibpath(__file__, 'server.pem'), 'r') as f:
-    A_HOST_KEYPAIR = f.read()
+A_HOST_KEYPAIR = getModule(__name__).filePath.sibling('server.pem').getContent()
 
 
 
@@ -2162,6 +2161,7 @@ class ConstructorsTests(unittest.TestCase):
             12346)
 
 
+
 class MultipleCertificateTrustRootTests(unittest.TestCase):
     """
     Test the behavior of the trustRootFromCertificates() API call.
@@ -2181,7 +2181,7 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
 
         mt = trustRootFromCertificates([cert0, cert1])
 
-        # verify that the returned object acts correctly when used as
+        # Verify that the returned object acts correctly when used as
         # a trustRoot= param to optionsForClientTLS
         sProto, cProto, pump = loopbackTLSConnectionInMemory(
             trustRoot=mt,
@@ -2189,7 +2189,7 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
             serverCertificate=cert0.original,
         )
 
-        # this connection should succeed
+        # This connection should succeed
         self.assertEqual(cProto.wrappedProtocol.data, b'greetings!')
         self.assertEqual(cProto.wrappedProtocol.lostReason, None)
 
@@ -2226,54 +2226,21 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
 
     def test_trustRootFromCertificatesOpenSslObjects(self):
         """
-        trustRootFromCertificates works with 'real' OpenSSL objects.
+        trustRootFromCertificates rejects 'real' OpenSSL X509 objects.
         """
         private = PrivateCertificate.loadPEM(A_HOST_KEYPAIR)
         cert0 = private.original
-        key0 = private.privateKey.original
-        cert1 = Certificate.loadPEM(A_HOST_CERTIFICATE_PEM).original
 
-        mt = trustRootFromCertificates([cert0, cert1])
-
-        sProto, cProto, pump = loopbackTLSConnectionInMemory(
-            trustRoot=mt,
-            privateKey=key0,
-            serverCertificate=cert0,
-        )
-        # this connection should succeed
-        self.assertEqual(cProto.wrappedProtocol.data, b'greetings!')
-        self.assertEqual(cProto.wrappedProtocol.lostReason, None)
-
-    def test_trustRootFromCertificatesInvalidObject(self):
-        """
-        trustRootFromCertificates rejects 'str' instances passed in place
-        of Certificate.
-        """
-        exception = self.assertRaises(
-            TypeError,
-            trustRootFromCertificates, ['I am only a string'],
-        )
-        self.assertEqual(
-            "certificates items must be twisted.iternet.ssl.Certificate"
-            " or OpenSSL.crypto.X509 instances",
-            exception.args[0],
-        )
-
-    def test_trustRootFromCertificatesInvalidOpenSslObject(self):
-        """
-        trustRootFromCertificates rejects an OpenSSL object that isn't
-        X509 instance.
-        """
-        cert0 = KeyPair.load(A_HOST_KEYPAIR, FILETYPE_PEM)
         exception = self.assertRaises(
             TypeError,
             trustRootFromCertificates, [cert0],
         )
         self.assertEqual(
-            "certificates items must be twisted.iternet.ssl.Certificate"
-            " or OpenSSL.crypto.X509 instances",
-            exception.args[0]
+            "certificates items must be twisted.iternet.ssl.CertBase"
+            " instances",
+            exception.args[0],
         )
+
 
 
 class OpenSSLCipherTests(unittest.TestCase):
