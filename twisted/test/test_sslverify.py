@@ -112,7 +112,7 @@ A_PEER_CERTIFICATE_PEM = """
 -----END CERTIFICATE-----
 """
 
-A_HOST_KEYPAIR = getModule(__name__).filePath.sibling('server.pem').getContent()
+A_KEYPAIR = getModule(__name__).filePath.sibling('server.pem').getContent()
 
 
 
@@ -2168,13 +2168,14 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
     if skipSSL:
         skip = skipSSL
 
+
     def test_trustRootFromCertificatesPrivatePublic(self):
         """
         trustRootFromCertificates must accept either Certificate or
         PrivateCertificate and accept a connection with valid
         certificates.
         """
-        cert0 = sslverify.PrivateCertificate.loadPEM(A_HOST_KEYPAIR)
+        cert0 = sslverify.PrivateCertificate.loadPEM(A_KEYPAIR)
         cert1 = sslverify.Certificate.loadPEM(A_HOST_CERTIFICATE_PEM)
 
         mt = sslverify.trustRootFromCertificates([cert0, cert1])
@@ -2191,15 +2192,16 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
         self.assertEqual(cProto.wrappedProtocol.data, b'greetings!')
         self.assertEqual(cProto.wrappedProtocol.lostReason, None)
 
+
     def test_trustRootFromCertificatesPrivatePublicUntrusted(self):
         """
         trustRootFromCertificates should return a trust-root that rejects
         connections using unknown certificates.
         """
-        cert0 = sslverify.PrivateCertificate.loadPEM(A_HOST_KEYPAIR)
+        cert0 = sslverify.PrivateCertificate.loadPEM(A_KEYPAIR)
         cert1 = sslverify.Certificate.loadPEM(A_HOST_CERTIFICATE_PEM)
 
-        # this test is the same as the above, except we do NOT include
+        # This test is the same as the above, except we do NOT include
         # the server's cert ('cert0') in the list of trusted
         # certificates.
         mt = sslverify.trustRootFromCertificates([cert1])
@@ -2222,11 +2224,12 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
         err = cProto.wrappedProtocol.lostReason.value
         self.assertEqual(err.args[0][0][2], 'tlsv1 alert unknown ca')
 
+
     def test_trustRootFromCertificatesOpenSslObjects(self):
         """
         trustRootFromCertificates rejects 'real' OpenSSL X509 objects.
         """
-        private = sslverify.PrivateCertificate.loadPEM(A_HOST_KEYPAIR)
+        private = sslverify.PrivateCertificate.loadPEM(A_KEYPAIR)
         cert0 = private.original
 
         exception = self.assertRaises(
