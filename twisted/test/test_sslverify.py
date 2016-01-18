@@ -2192,25 +2192,70 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
         self.assertEqual(cProto.wrappedProtocol.lostReason, None)
 
 
-    def test_trustRootFromCertificatesPrivatePublicUntrusted(self):
+    def test_trustRootSelfSignedServerCertificate(self):
         """
-        the object returned from trustRootFromCertificates rejects
-        connections using unknown certificates.
+        A server with a self-signed certificate.
         """
-        cert0 = sslverify.PrivateCertificate.loadPEM(A_KEYPAIR)
-        cert1 = sslverify.Certificate.loadPEM(A_HOST_CERTIFICATE_PEM)
+        key, cert = makeCertificate(O=b"Server Test Certificate", CN=b"server")
+        selfSigned = sslverify.PrivateCertificate.fromCertificateAndKeyPair(
+            sslverify.Certificate(cert),
+            sslverify.KeyPair(key),
+        )
 
-        # This test is the same as the above, except we do NOT include
-        # the server's cert ('cert0') in the list of trusted
-        # certificates.
-        mt = sslverify.trustRootFromCertificates([cert1])
+        trust = sslverify.trustRootFromCertificates([selfSigned])
 
-        # verify that the returned object acts correctly when used as
-        # a trustRoot= param to optionsForClientTLS
+        # since we trust this exact certificate, connections to this
+        # server should succeed.
         sProto, cProto, pump = loopbackTLSConnectionInMemory(
-            trustRoot=mt,
-            privateKey=cert0.privateKey.original,
-            serverCertificate=cert0.original,
+            trustRoot=trust,
+            privateKey=selfSigned.privateKey.original,
+            serverCertificate=selfSigned.original,
+        )
+        self.assertEqual(cProto.wrappedProtocol.data, b'greetings!')
+        self.assertEqual(cProto.wrappedProtocol.lostReason, None)
+
+
+    def test_trustRootCertificateAuthorityTrustsConnection(self):
+        """
+        An intermediate CA certificate signs a server's certificate.
+        """
+        caCert, serverCert = certificatesForAuthorityAndServer()
+
+        trust = sslverify.trustRootFromCertificates([caCert])
+
+        # since we've listed the CA's certificate as a trusted cert, a
+        # connection to the server certificate it signed should
+        # succeed.
+        sProto, cProto, pump = loopbackTLSConnectionInMemory(
+            trustRoot=trust,
+            privateKey=serverCert.privateKey.original,
+            serverCertificate=serverCert.original,
+        )
+        self.assertEqual(cProto.wrappedProtocol.data, b'greetings!')
+        self.assertEqual(cProto.wrappedProtocol.lostReason, None)
+
+
+    def test_trustRootFromCertificatesUntrusted(self):
+        """
+        A server's certificate isn't signed by any trusted certificate
+        """
+        key, cert = makeCertificate(O=b"Server Test Certificate", CN=b"server")
+        serverCert = sslverify.PrivateCertificate.fromCertificateAndKeyPair(
+            sslverify.Certificate(cert),
+            sslverify.KeyPair(key),
+        )
+        untrustedCert = sslverify.Certificate(
+            makeCertificate(O=b"CA Test Certificate", CN=b"unknown CA")[1]
+        )
+
+        trust = sslverify.trustRootFromCertificates([untrustedCert])
+
+        # since we only trust 'untrustedCert' which has not signed our
+        # server's cert, we should reject this connection
+        sProto, cProto, pump = loopbackTLSConnectionInMemory(
+            trustRoot=trust,
+            privateKey=serverCert.privateKey.original,
+            serverCertificate=serverCert.original,
         )
 
         # this connection should fail, so no data was received.
