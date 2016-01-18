@@ -2171,21 +2171,20 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
 
     def test_trustRootFromCertificatesPrivatePublic(self):
         """
-        trustRootFromCertificates must accept either Certificate or
-        PrivateCertificate and accept a connection with valid
-        certificates.
+        trustRootFromCertificates accepts both a Certificate or a
+        PrivateCertificate
         """
-        cert0 = sslverify.PrivateCertificate.loadPEM(A_KEYPAIR)
-        cert1 = sslverify.Certificate.loadPEM(A_HOST_CERTIFICATE_PEM)
+        privateCert = sslverify.PrivateCertificate.loadPEM(A_KEYPAIR)
+        cert = sslverify.Certificate.loadPEM(A_HOST_CERTIFICATE_PEM)
 
-        mt = sslverify.trustRootFromCertificates([cert0, cert1])
+        mt = sslverify.trustRootFromCertificates([privateCert, cert])
 
         # Verify that the returned object acts correctly when used as
         # a trustRoot= param to optionsForClientTLS
         sProto, cProto, pump = loopbackTLSConnectionInMemory(
             trustRoot=mt,
-            privateKey=cert0.privateKey.original,
-            serverCertificate=cert0.original,
+            privateKey=privateCert.privateKey.original,
+            serverCertificate=privateCert.original,
         )
 
         # This connection should succeed
@@ -2195,7 +2194,7 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
 
     def test_trustRootFromCertificatesPrivatePublicUntrusted(self):
         """
-        trustRootFromCertificates should return a trust-root that rejects
+        the object returned from trustRootFromCertificates rejects
         connections using unknown certificates.
         """
         cert0 = sslverify.PrivateCertificate.loadPEM(A_KEYPAIR)
@@ -2230,11 +2229,11 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
         trustRootFromCertificates rejects 'real' OpenSSL X509 objects.
         """
         private = sslverify.PrivateCertificate.loadPEM(A_KEYPAIR)
-        cert0 = private.original
+        certX509 = private.original
 
         exception = self.assertRaises(
             TypeError,
-            sslverify.trustRootFromCertificates, [cert0],
+            sslverify.trustRootFromCertificates, [certX509],
         )
         self.assertEqual(
             "certificates items must be twisted.iternet.ssl.CertBase"
