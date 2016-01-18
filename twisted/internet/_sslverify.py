@@ -1014,7 +1014,11 @@ class OpenSSLCertificateAuthorities(object):
 
 def trustRootFromCertificates(certificates):
     """
-    Builds an object that trusts multiple root L{Certificate}s
+    Builds an object that trusts multiple root L{Certificate}s.
+
+    When passed to L{optionsForClientTLS}, connections using those
+    options will reject any server certificate not signed by at least
+    one of the certificates in the `certificates` list.
 
     @since: 16.0.0
 
