@@ -2236,7 +2236,7 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
             sslverify.trustRootFromCertificates, [certX509],
         )
         self.assertEqual(
-            "certificates items must be twisted.iternet.ssl.CertBase"
+            "certificates items must be twisted.internet.ssl.CertBase"
             " instances",
             exception.args[0],
         )
