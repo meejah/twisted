@@ -1,1 +1,1 @@
-twisted.iternet.ssl.trustRootFromCertificates returns an object suitable for use as trustRoot= to twisted.internet.ssl.optionsForClientTLS that trusts multiple certificates.
+twisted.internet.ssl.trustRootFromCertificates returns an object suitable for use as trustRoot= to twisted.internet.ssl.optionsForClientTLS that trusts multiple certificates.
