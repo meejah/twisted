@@ -2171,8 +2171,8 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
 
     def test_trustRootFromCertificatesPrivatePublic(self):
         """
-        trustRootFromCertificates accepts both a Certificate or a
-        PrivateCertificate
+        L{trustRootFromCertificates} accepts either a Certificate or a
+        PrivateCertificate instance.
         """
         privateCert = sslverify.PrivateCertificate.loadPEM(A_KEYPAIR)
         cert = sslverify.Certificate.loadPEM(A_HOST_CERTIFICATE_PEM)
@@ -2194,7 +2194,9 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
 
     def test_trustRootSelfSignedServerCertificate(self):
         """
-        A server with a self-signed certificate.
+        L{trustRootFromCertificates} called with a single self-signed
+        certificate will cause L{optionsForClientTLS} to accept client
+        connections to a server with that certificate.
         """
         key, cert = makeCertificate(O=b"Server Test Certificate", CN=b"server")
         selfSigned = sslverify.PrivateCertificate.fromCertificateAndKeyPair(
@@ -2217,7 +2219,9 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
 
     def test_trustRootCertificateAuthorityTrustsConnection(self):
         """
-        An intermediate CA certificate signs a server's certificate.
+        L{trustRootFromCertificates} called with certificate A will cause
+        L{optionsForClientTLS} to accept client connections to a
+        server with certificate B where B is signed by A.
         """
         caCert, serverCert = certificatesForAuthorityAndServer()
 
@@ -2237,7 +2241,9 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
 
     def test_trustRootFromCertificatesUntrusted(self):
         """
-        A server's certificate isn't signed by any trusted certificate
+        L{trustRootFromCertificates} called with certificate A will
+        cause L{optionsForClientTLS} to disallow any connections to a
+        server with certificate B where B is not signed by A.
         """
         key, cert = makeCertificate(O=b"Server Test Certificate", CN=b"server")
         serverCert = sslverify.PrivateCertificate.fromCertificateAndKeyPair(
@@ -2271,7 +2277,8 @@ class MultipleCertificateTrustRootTests(unittest.TestCase):
 
     def test_trustRootFromCertificatesOpenSslObjects(self):
         """
-        trustRootFromCertificates rejects 'real' OpenSSL X509 objects.
+        L{trustRootFromCertificates} rejects any L{OpenSSL.crypto.X509}
+        instances in the list passed to it.
         """
         private = sslverify.PrivateCertificate.loadPEM(A_KEYPAIR)
         certX509 = private.original
