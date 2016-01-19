@@ -1025,9 +1025,9 @@ def trustRootFromCertificates(certificates):
     @param certificates: All certificates which will be trusted.
     @type certificates: C{iterable} of L{CertBase}
 
-    @return an object suitable for use as the trustRoot= keyword
+    @rtype: L{IOpenSSLTrustRoot}
+    @return: an object suitable for use as the trustRoot= keyword
         argument to L{optionsForClientTLS}
-    @rtype L{IOpenSSLTrustRoot}
     """
 
     certs = []
